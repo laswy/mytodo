@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quản lý Công việc PWA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; transition: background-color 0.3s, color 0.3s; }
+    body.dark-mode { background-color: #333; color: #f4f4f4; }
+    input, select, button { margin: 5px; padding: 6px; border-radius: 4px; border: 1px solid #ccc;}
+    body.dark-mode input, body.dark-mode select, body.dark-mode button { background-color: #555; color: #f4f4f4; border-color: #777;}
+    .task-list { list-style: none; padding: 0; }
+    .task-item {
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      transition: opacity 0.3s, background-color 0.3s;
+    }
+    body.dark-mode .task-item { border-color: #555; background-color: #444; }
+    .task-item.progress-white { background-color: #fff; }
+    .task-item.progress-pink { background-color: #ffe0e0; }
+    .task-item.progress-orange { background-color: #ffe5cc; }
+    .task-item.progress-red { background-color: #ffcccc; }
+    .task-item.completed-green { background-color: #e0ffe0; }
+    body.dark-mode .task-item.progress-white { background-color: #444; }
+    body.dark-mode .task-item.progress-pink { background-color: #663333; }
+    body.dark-mode .task-item.progress-orange { background-color: #664f33; }
+    body.dark-mode .task-item.progress-red { background-color: #663333; }
+    body.dark-mode .task-item.completed-green { background-color: #336633; }
+    .task-item.completed { opacity: 0.6; text-decoration: line-through; }
+    .progress-container { margin-top: 10px; height: 10px; background: #eee; border-radius: 5px; }
+    body.dark-mode .progress-container { background: #555; }
+    .progress-bar { height: 100%; background: #48bb78; border-radius: 5px; width: 0%; transition: width 0.3s; }
+    .stats-container { margin-top: 20px; padding: 10px; border: 1px solid #eee; border-radius: 5px; }
+    body.dark-mode .stats-container { border-color: #555; }
+    .filter-buttons button { margin-right: 10px; padding: 8px 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>📋 Quản lý Công việc</h1>
+  <button onclick="toggleDarkMode()">☀️/🌙 Chế độ tối</button>
+  <input type="text" id="taskInput" placeholder="Nội dung công việc">
+  <input type="date" id="startTime">
+  <input type="date" id="endTime">
+  <select id="prioritySelect">
+    <option value="low">Thấp</option>
+    <option value="medium" selected>Trung bình</option>
+    <option value="high">Cao</option>
+  </select>
+  <button onclick="addTask()">Thêm</button>
+  <div class="filter-buttons">
+    <button onclick="setFilter('all')">Tất cả</button>
+    <button onclick="setFilter('active')">Chưa hoàn thành</button>
+    <button onclick="setFilter('completed')">Đã hoàn thành</button>
+  </div>
+  <ul id="taskList" class="task-list"></ul>
+  <div class="stats-container">
+    <h3>Thống kê</h3>
+    <p>Tổng số công việc: <span id="totalTasks">0</span></p>
+    <p>Đã hoàn thành: <span id="completedTasks">0</span></p>
+    <p>Chưa hoàn thành: <span id="activeTasks">0</span></p>
+  </div>
+  <script>
+    let tasks = [];
+    let currentFilter = 'all';
+    function saveToLocal() {
+      localStorage.setItem('myTasks', JSON.stringify(tasks));
+    }
+    function loadFromLocal() {
+      const data = localStorage.getItem('myTasks');
+      if (data) {
+        tasks = JSON.parse(data);
+        renderTasks();
+        updateStats();
+      }
+      if (localStorage.getItem('darkMode') === 'enabled') {
+        document.body.classList.add('dark-mode');
+      }
+    }
+    function addTask() {
+      const text = document.getElementById('taskInput').value.trim();
+      const startInput = document.getElementById('startTime').value;
+      const endInput = document.getElementById('endTime').value;
+      const priority = document.getElementById('prioritySelect').value;
+      if (!text || !startInput) {
+        alert("Vui lòng nhập đầy đủ nội dung và ngày bắt đầu.");
+        return;
+      }
+      const start = new Date(startInput);
+      let end = endInput ? new Date(endInput) : new Date(startInput);
+      tasks.push({
+        text,
+        start: start.toISOString(),
+        end: end.toISOString(),
+        priority,
+        completed: false
+      });
+      saveToLocal();
+      renderTasks();
+      updateStats();
+      document.getElementById('taskInput').value = '';
+      document.getElementById('startTime').value = '';
+      document.getElementById('endTime').value = '';
+    }
+    function calculateProgress(task) {
+      if (task.completed) return 100;
+      const now = new Date();
+      const start = new Date(task.start);
+      const end = new Date(task.end);
+      if (now < start) return 0;
+      if (now >= end) return 100;
+      const total = end - start;
+      const passed = now - start;
+      return Math.floor((passed / total) * 100);
+    }
+    function renderTasks() {
+      const list = document.getElementById('taskList');
+      list.innerHTML = '';
+      const filteredTasks = tasks.filter(task => {
+        if (currentFilter === 'active') return !task.completed;
+        if (currentFilter === 'completed') return task.completed;
+        return true;
+      });
+      filteredTasks.forEach((task, index) => {
+        const percent = calculateProgress(task);
+        const li = document.createElement('li');
+        let taskColorClass = '';
+        if (task.completed) taskColorClass = 'completed-green';
+        else if (percent < 50) taskColorClass = 'progress-white';
+        else if (percent < 80) taskColorClass = 'progress-pink';
+        else if (percent < 100) taskColorClass = 'progress-orange';
+        else taskColorClass = 'progress-red';
+        li.className = `task-item ${taskColorClass} ${task.completed ? 'completed' : ''}`;
+        const originalIndex = tasks.indexOf(task);
+        li.innerHTML = `
+          <strong>${task.text}</strong><br>
+          ⏰ Bắt đầu: ${new Date(task.start).toLocaleDateString()}<br>
+          🛑 Kết thúc: ${new Date(task.end).toLocaleDateString()}<br>
+          ⚠️ Ưu tiên: ${task.priority}<br>
+          📈 Tiến độ thời gian: <strong>${percent}%</strong>
+          <div class="progress-container"><div class="progress-bar" style="width:${percent}%"></div></div>
+          ${!task.completed ? `<button onclick="markDone(${originalIndex})">✅ Đã hoàn thành</button>` : ''}
+          <button onclick="deleteTask(${originalIndex})">❌ Xóa</button>`;
+        list.appendChild(li);
+      });
+    }
+    function deleteTask(index) {
+      tasks.splice(index, 1);
+      saveToLocal();
+      renderTasks();
+      updateStats();
+    }
+    function markDone(index) {
+      tasks[index].completed = true;
+      saveToLocal();
+      renderTasks();
+      updateStats();
+    }
+    function setFilter(filter) {
+      currentFilter = filter;
+      renderTasks();
+    }
+    function updateStats() {
+      const total = tasks.length;
+      const completed = tasks.filter(task => task.completed).length;
+      const active = total - completed;
+      document.getElementById('totalTasks').textContent = total;
+      document.getElementById('completedTasks').textContent = completed;
+      document.getElementById('activeTasks').textContent = active;
+    }
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+      if (document.body.classList.contains('dark-mode')) {
+        localStorage.setItem('darkMode', 'enabled');
+      } else {
+        localStorage.setItem('darkMode', 'disabled');
+      }
+    }
+    window.onload = loadFromLocal;
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('ServiceWorker registered: ', reg.scope))
+          .catch(err => console.error('ServiceWorker registration failed: ', err));
+      });
+    }
+  </script>
+</body>
+</html>
