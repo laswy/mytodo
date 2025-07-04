@@ -436,41 +436,35 @@
     let tasks = [];
     let currentFilter = 'all';
     
-    // Server-side storage simulation (replace with actual backend API)
-    function saveToServer() {
-      // Simulate saving to server
-      // In real implementation, this would be a fetch() call to your backend
-      console.log('Saving to server:', tasks);
-      
-      // For demo purposes, we'll use a simple approach
-      // Replace this with actual server communication
+    // Data storage functions
+    function saveData() {
       try {
-        // Simulate server response
+        localStorage.setItem('myTasks', JSON.stringify(tasks));
+        localStorage.setItem('lastSaved', new Date().toISOString());
         showToast('Đã lưu thành công!', 'success');
       } catch (error) {
         showToast('Lỗi khi lưu dữ liệu!', 'error');
+        console.error('Save error:', error);
       }
     }
     
-    function loadFromServer() {
-      // Simulate loading from server
-      // In real implementation, this would be a fetch() call to your backend
-      console.log('Loading from server...');
-      
-      // For demo purposes, we'll start with empty tasks
-      // Replace this with actual server communication
+    function loadData() {
       try {
-        // Simulate server response
-        tasks = []; // This would be the data from your server
-        renderTasks();
-        updateStats();
+        const savedTasks = localStorage.getItem('myTasks');
+        if (savedTasks) {
+          tasks = JSON.parse(savedTasks);
+          renderTasks();
+          updateStats();
+        }
+        
+        // Load dark mode preference
+        if (localStorage.getItem('darkMode') === 'enabled') {
+          document.body.classList.add('dark-mode');
+        }
       } catch (error) {
         showToast('Lỗi khi tải dữ liệu!', 'error');
-      }
-      
-      // Load dark mode preference (can be stored locally)
-      if (localStorage.getItem('darkMode') === 'enabled') {
-        document.body.classList.add('dark-mode');
+        console.error('Load error:', error);
+        tasks = []; // Reset to empty array if loading fails
       }
     }
     
@@ -510,7 +504,7 @@
         completed: false
       });
       
-      saveToServer();
+      saveData();
       renderTasks();
       updateStats();
       
@@ -598,7 +592,7 @@
     function deleteTask(taskId) {
       if (confirm('Bạn có chắc muốn xóa công việc này?')) {
         tasks = tasks.filter(task => task.id !== parseInt(taskId));
-        saveToServer();
+        saveData();
         renderTasks();
         updateStats();
         showToast('Đã xóa công việc!', 'success');
@@ -609,7 +603,7 @@
       const task = tasks.find(t => t.id === parseInt(taskId));
       if (task) {
         task.completed = true;
-        saveToServer();
+        saveData();
         renderTasks();
         updateStats();
         showToast('Đã hoàn thành công việc!', 'success');
@@ -648,7 +642,7 @@
     }
     
     // Initialize app
-    window.onload = loadFromServer;
+    window.onload = loadData;
     
     // Service Worker registration
     if ('serviceWorker' in navigator) {
