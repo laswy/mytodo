@@ -2,108 +2,527 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <title>Quản lý Công việc PWA</title>
+  <title>QUẢN LÝ CÔNG VIỆC PWA</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="/manifest.json">
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; transition: background-color 0.3s, color 0.3s; }
-    body.dark-mode { background-color: #333; color: #f4f4f4; }
-    input, select, button { margin: 5px; padding: 6px; border-radius: 4px; border: 1px solid #ccc;}
-    body.dark-mode input, body.dark-mode select, body.dark-mode button { background-color: #555; color: #f4f4f4; border-color: #777;}
-    .task-list { list-style: none; padding: 0; }
-    .task-item {
-      padding: 10px;
-      border: 1px solid #ccc;
-      margin-bottom: 10px;
-      border-radius: 5px;
-      transition: opacity 0.3s, background-color 0.3s;
+    * { box-sizing: border-box; }
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 10px; 
+      margin: 0;
+      transition: background-color 0.3s, color 0.3s; 
+      background-color: #f8f9fa;
+      color: #333;
     }
-    body.dark-mode .task-item { border-color: #555; background-color: #444; }
+    body.dark-mode { 
+      background-color: #1a1a1a; 
+      color: #f4f4f4; 
+    }
+    
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 10px 0;
+    }
+    
+    .title {
+      font-size: 1.5em;
+      font-weight: bold;
+      text-align: center;
+      flex-grow: 1;
+      margin: 0;
+    }
+    
+    .dark-mode-toggle {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+    
+    .dark-mode-toggle:hover {
+      background: #0056b3;
+    }
+    
+    body.dark-mode .dark-mode-toggle {
+      background: #ffc107;
+      color: #000;
+    }
+    
+    body.dark-mode .dark-mode-toggle:hover {
+      background: #e0a800;
+    }
+    
+    /* Form styling */
+    .form-container {
+      margin-bottom: 20px;
+    }
+    
+    .input-group {
+      margin-bottom: 15px;
+    }
+    
+    .input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: #007bff;
+    }
+    
+    body.dark-mode input, body.dark-mode select {
+      background-color: #333;
+      color: #f4f4f4;
+      border-color: #555;
+    }
+    
+    body.dark-mode input:focus, body.dark-mode select:focus {
+      border-color: #ffc107;
+    }
+    
+    .add-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .add-btn:hover {
+      background: linear-gradient(135deg, #218838, #1ea887);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    }
+    
+    .add-btn:active {
+      transform: translateY(0);
+    }
+    
+    /* Filter buttons */
+    .filter-buttons {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .filter-buttons button {
+      flex: 1;
+      padding: 10px 15px;
+      border: 2px solid #007bff;
+      background: white;
+      color: #007bff;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 14px;
+      min-width: 100px;
+    }
+    
+    .filter-buttons button:hover,
+    .filter-buttons button.active {
+      background: #007bff;
+      color: white;
+    }
+    
+    body.dark-mode .filter-buttons button {
+      background: #1a1a1a;
+      color: #ffc107;
+      border-color: #ffc107;
+    }
+    
+    body.dark-mode .filter-buttons button:hover,
+    body.dark-mode .filter-buttons button.active {
+      background: #ffc107;
+      color: #000;
+    }
+    
+    /* Task list */
+    .task-list { 
+      list-style: none; 
+      padding: 0; 
+      margin: 0;
+    }
+    
+    .task-item {
+      padding: 15px;
+      border: 2px solid #e9ecef;
+      margin-bottom: 15px;
+      border-radius: 12px;
+      transition: all 0.3s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    body.dark-mode .task-item { 
+      border-color: #444; 
+      background-color: #2d2d2d;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
     .task-item.progress-white { background-color: #fff; }
     .task-item.progress-pink { background-color: #ffe0e0; }
     .task-item.progress-orange { background-color: #ffe5cc; }
     .task-item.progress-red { background-color: #ffcccc; }
     .task-item.completed-green { background-color: #e0ffe0; }
-    body.dark-mode .task-item.progress-white { background-color: #444; }
-    body.dark-mode .task-item.progress-pink { background-color: #663333; }
-    body.dark-mode .task-item.progress-orange { background-color: #664f33; }
-    body.dark-mode .task-item.progress-red { background-color: #663333; }
-    body.dark-mode .task-item.completed-green { background-color: #336633; }
+    
+    body.dark-mode .task-item.progress-white { background-color: #2d2d2d; }
+    body.dark-mode .task-item.progress-pink { background-color: #4d1f1f; }
+    body.dark-mode .task-item.progress-orange { background-color: #4d3319; }
+    body.dark-mode .task-item.progress-red { background-color: #4d1f1f; }
+    body.dark-mode .task-item.completed-green { background-color: #1f4d1f; }
+    
     .task-item.completed { opacity: 0.6; text-decoration: line-through; }
-    .progress-container { margin-top: 10px; height: 10px; background: #eee; border-radius: 5px; }
-    body.dark-mode .progress-container { background: #555; }
-    .progress-bar { height: 100%; background: #48bb78; border-radius: 5px; width: 0%; transition: width 0.3s; }
-    .stats-container { margin-top: 20px; padding: 10px; border: 1px solid #eee; border-radius: 5px; }
-    body.dark-mode .stats-container { border-color: #555; }
-    .filter-buttons button { margin-right: 10px; padding: 8px 12px; cursor: pointer; }
+    
+    .task-content {
+      margin-bottom: 12px;
+    }
+    
+    .task-title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    
+    .task-details {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    
+    body.dark-mode .task-details {
+      color: #ccc;
+    }
+    
+    .progress-container { 
+      margin: 10px 0; 
+      height: 8px; 
+      background: #e9ecef; 
+      border-radius: 4px; 
+      overflow: hidden;
+    }
+    
+    body.dark-mode .progress-container { 
+      background: #444; 
+    }
+    
+    .progress-bar { 
+      height: 100%; 
+      background: linear-gradient(90deg, #28a745, #20c997);
+      border-radius: 4px; 
+      width: 0%; 
+      transition: width 0.5s ease;
+    }
+    
+    .task-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .task-actions button {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+    
+    .complete-btn {
+      background: #28a745;
+      color: white;
+    }
+    
+    .complete-btn:hover {
+      background: #218838;
+    }
+    
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+    }
+    
+    .delete-btn:hover {
+      background: #c82333;
+    }
+    
+    /* Stats */
+    .stats-container { 
+      margin-top: 20px; 
+      padding: 15px; 
+      background: white;
+      border: 2px solid #e9ecef; 
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    body.dark-mode .stats-container { 
+      background: #2d2d2d;
+      border-color: #444;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 15px;
+      margin-top: 10px;
+    }
+    
+    .stat-item {
+      text-align: center;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    
+    body.dark-mode .stat-item {
+      background: #1a1a1a;
+    }
+    
+    .stat-number {
+      font-size: 24px;
+      font-weight: bold;
+      color: #007bff;
+    }
+    
+    body.dark-mode .stat-number {
+      color: #ffc107;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    body.dark-mode .stat-label {
+      color: #ccc;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .input-row {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .input-row input,
+      .input-row select {
+        width: 100%;
+      }
+      
+      .filter-buttons {
+        flex-direction: column;
+      }
+      
+      .filter-buttons button {
+        width: 100%;
+        margin-bottom: 8px;
+      }
+      
+      .task-actions {
+        flex-direction: column;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #28a745;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 1000;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+    
+    .toast.show {
+      transform: translateX(0);
+    }
+    
+    .toast.error {
+      background: #dc3545;
+    }
   </style>
 </head>
 <body>
-  <h1>📋 Quản lý Công việc</h1>
-  <button onclick="toggleDarkMode()">☀️/🌙 Chế độ tối</button>
-  <input type="text" id="taskInput" placeholder="Nội dung công việc">
-  <input type="date" id="startTime">
-  <input type="date" id="endTime">
-  <select id="prioritySelect">
-    <option value="low">Thấp</option>
-    <option value="medium" selected>Trung bình</option>
-    <option value="high">Cao</option>
-  </select>
-  <button onclick="addTask()">Thêm</button>
+  <div class="header">
+    <h1 class="title">📋 QUẢN LÝ CÔNG VIỆC</h1>
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()">☀️/🌙</button>
+  </div>
+  
+  <div class="form-container">
+    <div class="input-group">
+      <input type="text" id="taskInput" placeholder="Nội dung công việc">
+    </div>
+    
+    <div class="input-row">
+      <input type="date" id="startTime" placeholder="Thời gian bắt đầu">
+      <input type="date" id="endTime" placeholder="Thời gian kết thúc">
+      <select id="prioritySelect">
+        <option value="low">Thấp</option>
+        <option value="medium" selected>Trung bình</option>
+        <option value="high">Cao</option>
+      </select>
+    </div>
+    
+    <button class="add-btn" onclick="addTask()">➕ THÊM CÔNG VIỆC</button>
+  </div>
+  
   <div class="filter-buttons">
-    <button onclick="setFilter('all')">Tất cả</button>
+    <button class="active" onclick="setFilter('all')">Tất cả</button>
     <button onclick="setFilter('active')">Chưa hoàn thành</button>
     <button onclick="setFilter('completed')">Đã hoàn thành</button>
   </div>
+  
   <ul id="taskList" class="task-list"></ul>
+  
   <div class="stats-container">
-    <h3>Thống kê</h3>
-    <p>Tổng số công việc: <span id="totalTasks">0</span></p>
-    <p>Đã hoàn thành: <span id="completedTasks">0</span></p>
-    <p>Chưa hoàn thành: <span id="activeTasks">0</span></p>
+    <h3>📊 THỐNG KÊ</h3>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-number" id="totalTasks">0</div>
+        <div class="stat-label">Tổng số</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="completedTasks">0</div>
+        <div class="stat-label">Hoàn thành</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="activeTasks">0</div>
+        <div class="stat-label">Chưa hoàn thành</div>
+      </div>
+    </div>
   </div>
+
   <script>
     let tasks = [];
     let currentFilter = 'all';
-    function saveToLocal() {
-      localStorage.setItem('myTasks', JSON.stringify(tasks));
+    
+    // Server-side storage simulation (replace with actual backend API)
+    function saveToServer() {
+      // Simulate saving to server
+      // In real implementation, this would be a fetch() call to your backend
+      console.log('Saving to server:', tasks);
+      
+      // For demo purposes, we'll use a simple approach
+      // Replace this with actual server communication
+      try {
+        // Simulate server response
+        showToast('Đã lưu thành công!', 'success');
+      } catch (error) {
+        showToast('Lỗi khi lưu dữ liệu!', 'error');
+      }
     }
-    function loadFromLocal() {
-      const data = localStorage.getItem('myTasks');
-      if (data) {
-        tasks = JSON.parse(data);
+    
+    function loadFromServer() {
+      // Simulate loading from server
+      // In real implementation, this would be a fetch() call to your backend
+      console.log('Loading from server...');
+      
+      // For demo purposes, we'll start with empty tasks
+      // Replace this with actual server communication
+      try {
+        // Simulate server response
+        tasks = []; // This would be the data from your server
         renderTasks();
         updateStats();
+      } catch (error) {
+        showToast('Lỗi khi tải dữ liệu!', 'error');
       }
+      
+      // Load dark mode preference (can be stored locally)
       if (localStorage.getItem('darkMode') === 'enabled') {
         document.body.classList.add('dark-mode');
       }
     }
+    
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => toast.classList.add('show'), 100);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => document.body.removeChild(toast), 300);
+      }, 3000);
+    }
+    
     function addTask() {
       const text = document.getElementById('taskInput').value.trim();
       const startInput = document.getElementById('startTime').value;
       const endInput = document.getElementById('endTime').value;
       const priority = document.getElementById('prioritySelect').value;
+      
       if (!text || !startInput) {
-        alert("Vui lòng nhập đầy đủ nội dung và ngày bắt đầu.");
+        showToast("Vui lòng nhập đầy đủ nội dung và ngày bắt đầu.", 'error');
         return;
       }
+      
       const start = new Date(startInput);
       let end = endInput ? new Date(endInput) : new Date(startInput);
+      
       tasks.push({
+        id: Date.now(), // Simple ID generation
         text,
         start: start.toISOString(),
         end: end.toISOString(),
         priority,
         completed: false
       });
-      saveToLocal();
+      
+      saveToServer();
       renderTasks();
       updateStats();
+      
+      // Clear form
       document.getElementById('taskInput').value = '';
       document.getElementById('startTime').value = '';
       document.getElementById('endTime').value = '';
+      document.getElementById('prioritySelect').value = 'medium';
+      
+      showToast('Đã thêm công việc mới!', 'success');
     }
+    
     function calculateProgress(task) {
       if (task.completed) return 100;
       const now = new Date();
@@ -115,61 +534,110 @@
       const passed = now - start;
       return Math.floor((passed / total) * 100);
     }
+    
+    function getPriorityText(priority) {
+      switch(priority) {
+        case 'low': return 'Thấp';
+        case 'medium': return 'Trung bình';
+        case 'high': return 'Cao';
+        default: return priority;
+      }
+    }
+    
     function renderTasks() {
       const list = document.getElementById('taskList');
       list.innerHTML = '';
+      
       const filteredTasks = tasks.filter(task => {
         if (currentFilter === 'active') return !task.completed;
         if (currentFilter === 'completed') return task.completed;
         return true;
       });
-      filteredTasks.forEach((task, index) => {
+      
+      if (filteredTasks.length === 0) {
+        list.innerHTML = '<li style="text-align: center; padding: 20px; color: #666;">Không có công việc nào</li>';
+        return;
+      }
+      
+      filteredTasks.forEach((task) => {
         const percent = calculateProgress(task);
         const li = document.createElement('li');
+        
         let taskColorClass = '';
         if (task.completed) taskColorClass = 'completed-green';
         else if (percent < 50) taskColorClass = 'progress-white';
         else if (percent < 80) taskColorClass = 'progress-pink';
         else if (percent < 100) taskColorClass = 'progress-orange';
         else taskColorClass = 'progress-red';
+        
         li.className = `task-item ${taskColorClass} ${task.completed ? 'completed' : ''}`;
-        const originalIndex = tasks.indexOf(task);
+        
         li.innerHTML = `
-          <strong>${task.text}</strong><br>
-          ⏰ Bắt đầu: ${new Date(task.start).toLocaleDateString()}<br>
-          🛑 Kết thúc: ${new Date(task.end).toLocaleDateString()}<br>
-          ⚠️ Ưu tiên: ${task.priority}<br>
-          📈 Tiến độ thời gian: <strong>${percent}%</strong>
-          <div class="progress-container"><div class="progress-bar" style="width:${percent}%"></div></div>
-          ${!task.completed ? `<button onclick="markDone(${originalIndex})">✅ Đã hoàn thành</button>` : ''}
-          <button onclick="deleteTask(${originalIndex})">❌ Xóa</button>`;
+          <div class="task-content">
+            <div class="task-title">${task.text}</div>
+            <div class="task-details">
+              ⏰ Bắt đầu: ${new Date(task.start).toLocaleDateString('vi-VN')}<br>
+              🛑 Kết thúc: ${new Date(task.end).toLocaleDateString('vi-VN')}<br>
+              ⚠️ Ưu tiên: ${getPriorityText(task.priority)}<br>
+              📈 Tiến độ: <strong>${percent}%</strong>
+            </div>
+            <div class="progress-container">
+              <div class="progress-bar" style="width:${percent}%"></div>
+            </div>
+          </div>
+          <div class="task-actions">
+            ${!task.completed ? `<button class="complete-btn" onclick="markDone('${task.id}')">✅ Hoàn thành</button>` : ''}
+            <button class="delete-btn" onclick="deleteTask('${task.id}')">🗑️ Xóa</button>
+          </div>
+        `;
+        
         list.appendChild(li);
       });
     }
-    function deleteTask(index) {
-      tasks.splice(index, 1);
-      saveToLocal();
-      renderTasks();
-      updateStats();
+    
+    function deleteTask(taskId) {
+      if (confirm('Bạn có chắc muốn xóa công việc này?')) {
+        tasks = tasks.filter(task => task.id !== parseInt(taskId));
+        saveToServer();
+        renderTasks();
+        updateStats();
+        showToast('Đã xóa công việc!', 'success');
+      }
     }
-    function markDone(index) {
-      tasks[index].completed = true;
-      saveToLocal();
-      renderTasks();
-      updateStats();
+    
+    function markDone(taskId) {
+      const task = tasks.find(t => t.id === parseInt(taskId));
+      if (task) {
+        task.completed = true;
+        saveToServer();
+        renderTasks();
+        updateStats();
+        showToast('Đã hoàn thành công việc!', 'success');
+      }
     }
+    
     function setFilter(filter) {
       currentFilter = filter;
+      
+      // Update button states
+      document.querySelectorAll('.filter-buttons button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
       renderTasks();
     }
+    
     function updateStats() {
       const total = tasks.length;
       const completed = tasks.filter(task => task.completed).length;
       const active = total - completed;
+      
       document.getElementById('totalTasks').textContent = total;
       document.getElementById('completedTasks').textContent = completed;
       document.getElementById('activeTasks').textContent = active;
     }
+    
     function toggleDarkMode() {
       document.body.classList.toggle('dark-mode');
       if (document.body.classList.contains('dark-mode')) {
@@ -178,7 +646,11 @@
         localStorage.setItem('darkMode', 'disabled');
       }
     }
-    window.onload = loadFromLocal;
+    
+    // Initialize app
+    window.onload = loadFromServer;
+    
+    // Service Worker registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
