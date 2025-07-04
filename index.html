@@ -543,11 +543,36 @@
       const list = document.getElementById('taskList');
       list.innerHTML = '';
       
-      const filteredTasks = tasks.filter(task => {
+      let filteredTasks = tasks.filter(task => {
         if (currentFilter === 'active') return !task.completed;
         if (currentFilter === 'completed') return task.completed;
         return true;
       });
+      
+      // Sắp xếp tasks
+      if (currentFilter === 'all') {
+        filteredTasks.sort((a, b) => {
+          // Chưa hoàn thành lên trên, hoàn thành xuống dưới
+          if (a.completed !== b.completed) {
+            return a.completed ? 1 : -1;
+          }
+          
+          // Trong cùng trạng thái, sắp xếp theo tiến độ cao xuống thấp
+          const progressA = calculateProgress(a);
+          const progressB = calculateProgress(b);
+          return progressB - progressA;
+        });
+      } else if (currentFilter === 'active') {
+        // Chỉ tasks chưa hoàn thành, sắp xếp theo tiến độ cao xuống thấp
+        filteredTasks.sort((a, b) => {
+          const progressA = calculateProgress(a);
+          const progressB = calculateProgress(b);
+          return progressB - progressA;
+        });
+      } else if (currentFilter === 'completed') {
+        // Chỉ tasks đã hoàn thành, sắp xếp theo ngày hoàn thành mới nhất
+        filteredTasks.sort((a, b) => new Date(b.end) - new Date(a.end));
+      }
       
       if (filteredTasks.length === 0) {
         list.innerHTML = '<li style="text-align: center; padding: 20px; color: #666;">Không có công việc nào</li>';
